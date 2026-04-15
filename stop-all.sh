@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Reverse of start order
 SERVICES=(
     plane
+    inventree
     invoiceninja
     freescout
     n8n

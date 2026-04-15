@@ -1,0 +1,110 @@
+# InvenTree — Inventory & Parts Management
+# Project name: inventree  (managed by start.sh / stop.sh)
+#
+# Services:
+#   inventree-db      — PostgreSQL 17 (application database)
+#   inventree-cache   — Redis 7 (cache layer)
+#   inventree-server  — Gunicorn/Django application server (internal)
+#   inventree-worker  — Django-Q background task worker
+#   inventree-proxy   — Caddy reverse proxy; host port 8096
+#
+# On first start, inventree-server automatically runs database migrations and
+# creates the admin account (INVENTREE_AUTO_UPDATE=True).  secret_key.txt is
+# auto-generated in the data volume if absent.
+# Caddy serves static and media files directly from the shared data volume,
+# proxying all other requests to the application server.
+
+networks:
+  inventree:
+
+volumes:
+  inventree_data:
+  inventree_pgdata:
+  inventree_cache:
+
+services:
+
+  # ── Database ───────────────────────────────────────────────────────────────────
+  inventree-db:
+    image: postgres:17-alpine
+    container_name: inventree_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${INVENTREE_DB_NAME:-inventree}
+      POSTGRES_USER: ${INVENTREE_DB_USER:-inventree}
+      POSTGRES_PASSWORD: "${INVENTREE_DB_PASSWORD}"
+    volumes:
+      - inventree_pgdata:/var/lib/postgresql/data
+    networks:
+      - inventree
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${INVENTREE_DB_USER:-inventree} -d ${INVENTREE_DB_NAME:-inventree}"]
+      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Cache ──────────────────────────────────────────────────────────────────────
+  inventree-cache:
+    image: redis:7-alpine
+    container_name: inventree_cache
+    restart: unless-stopped
+    volumes:
+      - inventree_cache:/data
+    networks:
+      - inventree
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      start_period: 5s
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Application server ─────────────────────────────────────────────────────────
+  inventree-server:
+    image: inventree/inventree:${INVENTREE_TAG:-stable}
+    pull_policy: if_not_present
+    container_name: inventree_server
+    restart: unless-stopped
+    env_file: ./.env
+    volumes:
+      - inventree_data:/home/inventree/data
+    networks:
+      - inventree
+    depends_on:
+      inventree-db:
+        condition: service_healthy
+      inventree-cache:
+        condition: service_healthy
+
+  # ── Background worker ──────────────────────────────────────────────────────────
+  inventree-worker:
+    image: inventree/inventree:${INVENTREE_TAG:-stable}
+    pull_policy: if_not_present
+    container_name: inventree_worker
+    command: invoke worker
+    restart: unless-stopped
+    env_file: ./.env
+    volumes:
+      - inventree_data:/home/inventree/data
+    networks:
+      - inventree
+    depends_on:
+      - inventree-server
+
+  # ── Reverse proxy — host port 8096 ────────────────────────────────────────────
+  inventree-proxy:
+    image: caddy:2-alpine
+    container_name: inventree_proxy
+    restart: unless-stopped
+    environment:
+      INVENTREE_SERVER_ADDR: http://inventree-server:8000
+    ports:
+      - "${INVENTREE_WEB_PORT:-8096}:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - inventree_data:/var/www:ro
+    networks:
+      - inventree
+    depends_on:
+      - inventree-server

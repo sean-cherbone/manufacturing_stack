@@ -10,6 +10,7 @@ A collection of self-hosted, open-source services for manufacturing operations, 
 | [BookStack](https://www.bookstackapp.com) | [6875](http://localhost:6875) | Documentation and knowledge base |
 | [FreeScout](https://freescout.net) | [8095](http://localhost:8095) | Help desk and shared inbox |
 | [Invoice Ninja](https://invoiceninja.com) | [8092](http://localhost:8092) | Accounting and invoicing |
+| [InvenTree](https://inventree.org) | [8096](http://localhost:8096) | Inventory and parts management |
 | [Plane](https://plane.so) | [8100](http://localhost:8100) | Project management and work tracking |
 
 ## Prerequisites
@@ -43,6 +44,9 @@ cd freescout && ./stop.sh
 cd invoiceninja && ./start.sh
 cd invoiceninja && ./stop.sh
 
+cd inventree && ./start.sh
+cd inventree && ./stop.sh
+
 cd plane && ./start.sh
 cd plane && ./stop.sh
 ```
@@ -57,6 +61,7 @@ Each service has a `.env` file containing default values. **Review and update pa
 | n8n | `n8n/.env` | `POSTGRES_PASSWORD`, `POSTGRES_NON_ROOT_PASSWORD` |
 | FreeScout | `freescout/.env` | `DB_PASSWORD`, `ADMIN_EMAIL`, `ADMIN_PASS` |
 | Invoice Ninja | `invoiceninja/.env` | `DB_PASSWORD`, `DB_ROOT_PASSWORD`, `IN_USER_EMAIL`, `IN_PASSWORD` |
+| InvenTree | `inventree/.env` | `INVENTREE_DB_PASSWORD`, `INVENTREE_ADMIN_PASSWORD` |
 | Plane | `plane/.env` | `POSTGRES_PASSWORD`, `SECRET_KEY`, `RABBITMQ_PASSWORD` |
 
 `.env` files are git-ignored and will not be committed. Each file is created with working defaults so the stack runs out of the box.
@@ -86,6 +91,13 @@ Each service has a `.env` file containing default values. **Review and update pa
 - Set `IN_USER_EMAIL` in `invoiceninja/.env` before first run to set the admin email
 - **Do not change `APP_KEY` after first run** — it encrypts stored credentials and tokens
 - Default login: value of `IN_USER_EMAIL` / `IN_PASSWORD` in `invoiceninja/.env`
+
+### InvenTree
+
+- `INVENTREE_DB_PASSWORD` and `INVENTREE_ADMIN_PASSWORD` are auto-generated and saved to `inventree/.env` on first start
+- `secret_key.txt` is auto-generated inside the data volume on first start — **back it up and never delete it**, as it encrypts stored credentials
+- Database migrations run automatically on startup (`INVENTREE_AUTO_UPDATE=True`)
+- Default login: `admin` / value of `INVENTREE_ADMIN_PASSWORD` in `inventree/.env`
 
 ### Plane
 
@@ -119,4 +131,5 @@ Each service is a separate Docker Compose project with its own network, volumes,
 | n8n | `n8n` | PostgreSQL 17 |
 | FreeScout | `freescout` | MariaDB 11 |
 | Invoice Ninja | `invoiceninja` | MySQL 8 |
+| InvenTree | `inventree` | PostgreSQL 17 |
 | Plane | `plane` | PostgreSQL 15 |

@@ -11,6 +11,7 @@ SERVICES=(
     n8n
     freescout
     invoiceninja
+    inventree
     plane
 )
 
