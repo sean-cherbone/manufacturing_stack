@@ -9,6 +9,8 @@ A collection of self-hosted, open-source services for manufacturing operations, 
 | [n8n](https://n8n.io) | [5678](http://localhost:5678) | Workflow automation — integrates all services |
 | [BookStack](https://www.bookstackapp.com) | [6875](http://localhost:6875) | Documentation and knowledge base |
 | [FreeScout](https://freescout.net) | [8095](http://localhost:8095) | Help desk and shared inbox |
+| [Invoice Ninja](https://invoiceninja.com) | [8092](http://localhost:8092) | Accounting and invoicing |
+| [Plane](https://plane.so) | [8100](http://localhost:8100) | Project management and work tracking |
 
 ## Prerequisites
 
@@ -37,6 +39,12 @@ cd n8n && ./stop.sh
 
 cd freescout && ./start.sh
 cd freescout && ./stop.sh
+
+cd invoiceninja && ./start.sh
+cd invoiceninja && ./stop.sh
+
+cd plane && ./start.sh
+cd plane && ./stop.sh
 ```
 
 ## Configuration
@@ -48,6 +56,8 @@ Each service has a `.env` file containing default values. **Review and update pa
 | BookStack | `bookstack/.env` | `DB_PASSWORD`, `MYSQL_ROOT_PASSWORD` |
 | n8n | `n8n/.env` | `POSTGRES_PASSWORD`, `POSTGRES_NON_ROOT_PASSWORD` |
 | FreeScout | `freescout/.env` | `DB_PASSWORD`, `ADMIN_EMAIL`, `ADMIN_PASS` |
+| Invoice Ninja | `invoiceninja/.env` | `DB_PASSWORD`, `DB_ROOT_PASSWORD`, `IN_USER_EMAIL`, `IN_PASSWORD` |
+| Plane | `plane/.env` | `POSTGRES_PASSWORD`, `SECRET_KEY`, `RABBITMQ_PASSWORD` |
 
 `.env` files are git-ignored and will not be committed. Each file is created with working defaults so the stack runs out of the box.
 
@@ -69,6 +79,19 @@ Each service has a `.env` file containing default values. **Review and update pa
 - Database schema and admin account are created automatically on first start (~2–5 minutes)
 - Set `ADMIN_EMAIL` and `ADMIN_PASS` in `freescout/.env` before first run — these cannot be changed via `.env` after the database is initialised
 - Default login: values of `ADMIN_EMAIL` / `ADMIN_PASS` in `freescout/.env`
+
+### Invoice Ninja
+
+- `APP_KEY`, `DB_PASSWORD`, `DB_ROOT_PASSWORD`, and `IN_PASSWORD` are auto-generated and saved to `invoiceninja/.env` on first start
+- Set `IN_USER_EMAIL` in `invoiceninja/.env` before first run to set the admin email
+- **Do not change `APP_KEY` after first run** — it encrypts stored credentials and tokens
+- Default login: value of `IN_USER_EMAIL` / `IN_PASSWORD` in `invoiceninja/.env`
+
+### Plane
+
+- `SECRET_KEY`, `LIVE_SERVER_SECRET_KEY`, `POSTGRES_PASSWORD`, `RABBITMQ_PASSWORD`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` are auto-generated and saved to `plane/.env` on first start
+- Create your workspace and owner account on first visit to `http://localhost:8100`
+- **Do not change `SECRET_KEY` after first run** — it invalidates all active sessions
 
 ## Data Persistence
 
@@ -95,3 +118,5 @@ Each service is a separate Docker Compose project with its own network, volumes,
 | BookStack | `bookstack` | MariaDB 11 |
 | n8n | `n8n` | PostgreSQL 17 |
 | FreeScout | `freescout` | MariaDB 11 |
+| Invoice Ninja | `invoiceninja` | MySQL 8 |
+| Plane | `plane` | PostgreSQL 15 |
