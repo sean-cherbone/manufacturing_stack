@@ -1,0 +1,148 @@
+# n8n — Workflow Automation
+# Project name: n8n  (managed by start.sh / stop.sh)
+#
+# Architecture (official production pattern):
+#   postgres          — PostgreSQL 16 (persistent workflow/credential store)
+#   redis             — Redis 6 (BullMQ job queue for queue mode)
+#   n8n               — Main instance: UI, API, webhook receiver, scheduler
+#   n8n-runner        — Task runner sidecar for the main instance (JS sandbox)
+#   n8n-worker        — Worker process: pulls jobs from Redis and executes them
+#   n8n-worker-runner — Task runner sidecar for the worker
+#
+# Queue mode means workflow executions run in n8n-worker, keeping the main
+# instance responsive for the UI and webhook ingestion at all times.
+#
+# UI / API: http://localhost:5678
+
+volumes:
+  db_storage:
+  n8n_storage:
+  redis_storage:
+
+# ── Shared anchors ──────────────────────────────────────────────────────────────
+x-n8n-image: &n8n_image
+  image: docker.n8n.io/n8nio/n8n:${N8N_VERSION:-stable}
+  pull_policy: if-not-present
+
+x-runner-image: &runner_image
+  image: n8nio/runners:${N8N_VERSION:-stable}
+  pull_policy: if-not-present
+
+x-shared: &shared
+  <<: *n8n_image
+  restart: unless-stopped
+  environment:
+    # ── Database ───────────────────────────────────────────────────────────────
+    DB_TYPE: postgresdb
+    DB_POSTGRESDB_HOST: postgres
+    DB_POSTGRESDB_PORT: "5432"
+    DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-n8n}
+    DB_POSTGRESDB_USER: ${POSTGRES_NON_ROOT_USER}
+    DB_POSTGRESDB_PASSWORD: ${POSTGRES_NON_ROOT_PASSWORD}
+    # ── Queue mode (Redis / BullMQ) ────────────────────────────────────────────
+    EXECUTIONS_MODE: queue
+    QUEUE_BULL_REDIS_HOST: redis
+    QUEUE_BULL_REDIS_PORT: "6379"
+    QUEUE_HEALTH_CHECK_ACTIVE: "true"
+    OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
+    # ── External task runners ──────────────────────────────────────────────────
+    N8N_RUNNERS_MODE: external
+    N8N_RUNNERS_AUTH_TOKEN: ${RUNNERS_AUTH_TOKEN}
+    N8N_RUNNERS_BROKER_LISTEN_ADDRESS: 0.0.0.0
+    # ── Security ──────────────────────────────────────────────────────────────
+    N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+    # ── Application ───────────────────────────────────────────────────────────
+    N8N_HOST: ${N8N_HOST:-localhost}
+    N8N_PORT: "5678"
+    N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+    WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:5678/}
+    GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-America/Chicago}
+    TZ: ${TZ:-America/Chicago}
+    N8N_LOG_LEVEL: ${N8N_LOG_LEVEL:-info}
+    N8N_DIAGNOSTICS_ENABLED: "false"
+    # ── Execution data pruning ────────────────────────────────────────────────
+    EXECUTIONS_DATA_PRUNE: "true"
+    EXECUTIONS_DATA_MAX_AGE: "336"
+    EXECUTIONS_DATA_PRUNE_MAX_COUNT: "50000"
+  volumes:
+    - n8n_storage:/home/node/.n8n
+  depends_on:
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+
+services:
+
+  # ── Database ──────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: n8n_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-n8n}
+      POSTGRES_NON_ROOT_USER: ${POSTGRES_NON_ROOT_USER}
+      POSTGRES_NON_ROOT_PASSWORD: ${POSTGRES_NON_ROOT_PASSWORD}
+      TZ: ${TZ:-America/Chicago}
+    volumes:
+      - db_storage:/var/lib/postgresql/data
+      - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB:-n8n}"]
+      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Queue ─────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:6-alpine
+    container_name: n8n_redis
+    restart: unless-stopped
+    volumes:
+      - redis_storage:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Main n8n instance (UI + API + webhooks + scheduler) ─────────────────────
+  n8n:
+    <<: *shared
+    container_name: n8n
+    ports:
+      - "${N8N_PORT_HOST:-5678}:5678"
+
+  # ── Task runner sidecar for the main instance ─────────────────────────────────
+  n8n-runner:
+    <<: *runner_image
+    container_name: n8n_runner
+    restart: unless-stopped
+    environment:
+      N8N_RUNNERS_AUTH_TOKEN: ${RUNNERS_AUTH_TOKEN}
+      N8N_RUNNERS_TASK_BROKER_URI: http://n8n:5679
+    depends_on:
+      - n8n
+
+  # ── Worker: executes queued workflow jobs ─────────────────────────────────────
+  n8n-worker:
+    <<: *shared
+    container_name: n8n_worker
+    command: worker
+    depends_on:
+      - n8n
+
+  # ── Task runner sidecar for the worker ────────────────────────────────────────
+  n8n-worker-runner:
+    <<: *runner_image
+    container_name: n8n_worker_runner
+    restart: unless-stopped
+    environment:
+      N8N_RUNNERS_AUTH_TOKEN: ${RUNNERS_AUTH_TOKEN}
+      N8N_RUNNERS_TASK_BROKER_URI: http://n8n-worker:5679
+    depends_on:
+      - n8n-worker
