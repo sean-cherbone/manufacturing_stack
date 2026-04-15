@@ -11,7 +11,6 @@ SERVICES=(
     plane
     invoiceninja
     freescout
-    openproject
     n8n
     bookstack
 )

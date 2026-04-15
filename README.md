@@ -8,7 +8,6 @@ A collection of self-hosted, open-source services for manufacturing operations, 
 | ------- | ---- | ------- |
 | [n8n](https://n8n.io) | [5678](http://localhost:5678) | Workflow automation — integrates all services |
 | [BookStack](https://www.bookstackapp.com) | [6875](http://localhost:6875) | Documentation and knowledge base |
-| [OpenProject](https://www.openproject.org) | [8090](http://localhost:8090) | Project management and work tracking |
 | [FreeScout](https://freescout.net) | [8095](http://localhost:8095) | Help desk and shared inbox |
 
 ## Prerequisites
@@ -36,9 +35,6 @@ cd bookstack && ./stop.sh
 cd n8n && ./start.sh
 cd n8n && ./stop.sh
 
-cd openproject && ./start.sh
-cd openproject && ./stop.sh
-
 cd freescout && ./start.sh
 cd freescout && ./stop.sh
 ```
@@ -51,7 +47,6 @@ Each service has a `.env` file containing default values. **Review and update pa
 | ------- | ----------- | ------------- |
 | BookStack | `bookstack/.env` | `DB_PASSWORD`, `MYSQL_ROOT_PASSWORD` |
 | n8n | `n8n/.env` | `POSTGRES_PASSWORD`, `POSTGRES_NON_ROOT_PASSWORD` |
-| OpenProject | `openproject/.env` | `POSTGRES_PASSWORD`, `SECRET_KEY_BASE` |
 | FreeScout | `freescout/.env` | `DB_PASSWORD`, `ADMIN_EMAIL`, `ADMIN_PASS` |
 
 `.env` files are git-ignored and will not be committed. Each file is created with working defaults so the stack runs out of the box.
@@ -68,12 +63,6 @@ Each service has a `.env` file containing default values. **Review and update pa
 - `N8N_ENCRYPTION_KEY` and `RUNNERS_AUTH_TOKEN` are auto-generated and saved to `n8n/.env` on first start
 - Create your owner account on first visit to `http://localhost:5678`
 - **Keep `n8n/.env` backed up** — losing `N8N_ENCRYPTION_KEY` means losing access to all stored credentials
-
-### OpenProject
-
-- `SECRET_KEY_BASE` and `COLLABORATIVE_SERVER_SECRET` are auto-generated and saved to `openproject/.env` on first start
-- The `seeder` service runs database migrations on first start (~2–3 minutes) before the UI becomes available
-- Default login: `admin` / `admin` — change immediately
 
 ### FreeScout
 
@@ -105,5 +94,4 @@ Each service is a separate Docker Compose project with its own network, volumes,
 | ------- | ------------- | -------- |
 | BookStack | `bookstack` | MariaDB 11 |
 | n8n | `n8n` | PostgreSQL 17 |
-| OpenProject | `openproject` | PostgreSQL 17 |
 | FreeScout | `freescout` | MariaDB 11 |
