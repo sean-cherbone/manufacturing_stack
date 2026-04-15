@@ -12,6 +12,7 @@ SERVICES=(
     n8n
     openproject
     freescout
+    plane
 )
 
 FAILED=()
