@@ -8,6 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Reverse of start order
 SERVICES=(
+    freescout
     openproject
     n8n
     erpnext

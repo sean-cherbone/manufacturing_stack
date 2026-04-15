@@ -1,0 +1,75 @@
+# FreeScout — Help Desk / Shared Inbox
+# Project name: freescout  (managed by start.sh / stop.sh)
+#
+# Services:
+#   db         — MariaDB 11 (application database)
+#   freescout  — Nginx + PHP-FPM application; exposed on host port 8095
+
+networks:
+  backend:
+
+volumes:
+  db_data:
+  app_data:
+  app_logs:
+
+services:
+
+  # ── Database ─────────────────────────────────────────────────────────────────
+  db:
+    image: mariadb:11
+    container_name: freescout_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: freescout
+      MYSQL_USER: freescout
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+      TZ: "${TZ:-America/Chicago}"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Application — host port 8095 ─────────────────────────────────────────────
+  freescout:
+    image: tiredofit/freescout:latest
+    pull_policy: if_not_present
+    container_name: freescout
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TIMEZONE: "${TZ:-America/Chicago}"
+      CONTAINER_NAME: freescout
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: freescout
+      DB_USER: freescout
+      DB_PASS: "${DB_PASSWORD}"
+      SITE_URL: "${SITE_URL:-http://localhost:8095}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL}"
+      ADMIN_PASS: "${ADMIN_PASS}"
+      DISPLAY_ERRORS: "FALSE"
+      ENABLE_AUTO_UPDATE: "FALSE"
+      SETUP_TYPE: AUTO
+    volumes:
+      - app_data:/data
+      - app_logs:/www/logs
+    ports:
+      - "${FREESCOUT_PORT:-8095}:80"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/login"]
+      start_period: 120s
+      interval: 30s
+      timeout: 10s
+      retries: 3

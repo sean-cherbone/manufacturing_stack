@@ -11,6 +11,7 @@ SERVICES=(
     erpnext
     n8n
     openproject
+    freescout
 )
 
 FAILED=()
