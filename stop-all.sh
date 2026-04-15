@@ -13,7 +13,6 @@ SERVICES=(
     freescout
     openproject
     n8n
-    erpnext
     bookstack
 )
 

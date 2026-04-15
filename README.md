@@ -8,7 +8,6 @@ A collection of self-hosted, open-source services for manufacturing operations, 
 | ------- | ---- | ------- |
 | [n8n](https://n8n.io) | [5678](http://localhost:5678) | Workflow automation — integrates all services |
 | [BookStack](https://www.bookstackapp.com) | [6875](http://localhost:6875) | Documentation and knowledge base |
-| [ERPNext](https://erpnext.com) | [8082](http://localhost:8082) | Manufacturing ERP (inventory, BOM, production orders) |
 | [OpenProject](https://www.openproject.org) | [8090](http://localhost:8090) | Project management and work tracking |
 | [FreeScout](https://freescout.net) | [8095](http://localhost:8095) | Help desk and shared inbox |
 
@@ -34,9 +33,6 @@ Individual service control:
 cd bookstack && ./start.sh
 cd bookstack && ./stop.sh
 
-cd erpnext && ./start.sh
-cd erpnext && ./stop.sh
-
 cd n8n && ./start.sh
 cd n8n && ./stop.sh
 
@@ -54,7 +50,6 @@ Each service has a `.env` file containing default values. **Review and update pa
 | Service | Config file | Key variables |
 | ------- | ----------- | ------------- |
 | BookStack | `bookstack/.env` | `DB_PASSWORD`, `MYSQL_ROOT_PASSWORD` |
-| ERPNext | `erpnext/.env` | `DB_PASSWORD`, `ADMIN_PASSWORD` |
 | n8n | `n8n/.env` | `POSTGRES_PASSWORD`, `POSTGRES_NON_ROOT_PASSWORD` |
 | OpenProject | `openproject/.env` | `POSTGRES_PASSWORD`, `SECRET_KEY_BASE` |
 | FreeScout | `freescout/.env` | `DB_PASSWORD`, `ADMIN_EMAIL`, `ADMIN_PASS` |
@@ -67,11 +62,6 @@ Each service has a `.env` file containing default values. **Review and update pa
 
 - `APP_KEY` is auto-generated and saved to `bookstack/.env` on first start
 - Default login: `admin@admin.com` / `password` — change immediately
-
-### ERPNext
-
-- Site is created automatically on first start (~2–3 minutes)
-- Default login: `Administrator` / value of `ADMIN_PASSWORD` in `erpnext/.env`
 
 ### n8n
 
@@ -90,14 +80,6 @@ Each service has a `.env` file containing default values. **Review and update pa
 - Database schema and admin account are created automatically on first start (~2–5 minutes)
 - Set `ADMIN_EMAIL` and `ADMIN_PASS` in `freescout/.env` before first run — these cannot be changed via `.env` after the database is initialised
 - Default login: values of `ADMIN_EMAIL` / `ADMIN_PASS` in `freescout/.env`
-
-## Service Integration
-
-n8n connects to ERPNext via its REST API:
-
-- Base URL: `http://localhost:8082/api/`
-- Auth: token-based — generate an API key in ERPNext under **Settings → My Account → API Access**
-- Format: `Authorization: Token <api_key>:<api_secret>`
 
 ## Data Persistence
 
@@ -122,7 +104,6 @@ Each service is a separate Docker Compose project with its own network, volumes,
 | Service | Docker project | Database |
 | ------- | ------------- | -------- |
 | BookStack | `bookstack` | MariaDB 11 |
-| ERPNext | `frappe_mfg` | MariaDB 11 |
 | n8n | `n8n` | PostgreSQL 17 |
 | OpenProject | `openproject` | PostgreSQL 17 |
 | FreeScout | `freescout` | MariaDB 11 |
