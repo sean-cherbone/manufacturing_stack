@@ -22,11 +22,11 @@ volumes:
 # ── Shared anchors ──────────────────────────────────────────────────────────────
 x-n8n-image: &n8n_image
   image: docker.n8n.io/n8nio/n8n:${N8N_VERSION:-stable}
-  pull_policy: if-not-present
+  pull_policy: if_not_present
 
 x-runner-image: &runner_image
   image: n8nio/runners:${N8N_VERSION:-stable}
-  pull_policy: if-not-present
+  pull_policy: if_not_present
 
 x-shared: &shared
   <<: *n8n_image
@@ -76,7 +76,7 @@ services:
 
   # ── Database ──────────────────────────────────────────────────────────────────
   postgres:
-    image: postgres:16
+    image: postgres:17
     container_name: n8n_postgres
     restart: unless-stopped
     environment:

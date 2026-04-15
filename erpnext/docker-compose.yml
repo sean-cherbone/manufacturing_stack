@@ -16,7 +16,7 @@
 
 x-erpnext-image: &erpnext_image
   image: frappe/erpnext:${ERPNEXT_VERSION}
-  pull_policy: if-not-present
+  pull_policy: if_not_present
 
 x-site-volumes: &site_volumes
   volumes:

@@ -1,0 +1,195 @@
+# OpenProject — Project Management
+# Project name: openproject  (managed by start.sh / stop.sh)
+#
+# Services:
+#   db          — PostgreSQL 17 (application database)
+#   cache       — Memcached (session/object cache, required by Rails)
+#   seeder      — one-shot: database migrations + initial seed data
+#   web         — Rails/Puma application server
+#   worker      — background job processor
+#   cron        — scheduled task runner
+#   hocuspocus  — collaborative real-time editing server
+#   proxy       — Caddy reverse proxy; exposed on host port 8090
+#   autoheal    — watches healthcheck labels and restarts unhealthy containers
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  pgdata:
+  opdata:
+
+# ── Shared anchors ─────────────────────────────────────────────────────────────
+x-op-restart-policy: &restart_policy
+  restart: unless-stopped
+
+x-op-image: &image
+  image: openproject/openproject:${TAG:-17-slim}
+  pull_policy: if_not_present
+
+x-op-app: &app
+  <<: [*image, *restart_policy]
+  environment:
+    OPENPROJECT_HTTPS: "${OPENPROJECT_HTTPS:-false}"
+    OPENPROJECT_HOST__NAME: "${OPENPROJECT_HOST__NAME:-localhost:8090}"
+    OPENPROJECT_ADDITIONAL__HOST__NAMES: "${OPENPROJECT_ADDITIONAL__HOST__NAMES:-web}"
+    OPENPROJECT_HSTS: "${OPENPROJECT_HSTS:-false}"
+    OPENPROJECT_RAILS__CACHE__STORE: "memcache"
+    OPENPROJECT_CACHE__MEMCACHE__SERVER: "cache:11211"
+    OPENPROJECT_RAILS__RELATIVE__URL__ROOT: "${OPENPROJECT_RAILS__RELATIVE__URL__ROOT:-}"
+    OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__URL: "${COLLABORATIVE_SERVER_URL:-ws://localhost:8090/hocuspocus}"
+    OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET: "${COLLABORATIVE_SERVER_SECRET}"
+    DATABASE_URL: "${DATABASE_URL}"
+    RAILS_MIN_THREADS: "${RAILS_MIN_THREADS:-4}"
+    RAILS_MAX_THREADS: "${RAILS_MAX_THREADS:-16}"
+    IMAP_ENABLED: "${IMAP_ENABLED:-false}"
+    SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
+    TZ: "${TZ:-America/Chicago}"
+  volumes:
+    - opdata:/var/openproject/assets
+
+services:
+
+  # ── Database ─────────────────────────────────────────────────────────────────
+  db:
+    image: postgres:${POSTGRES_VERSION:-17}
+    container_name: openproject_db
+    <<: *restart_policy
+    stop_grace_period: "3s"
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: openproject
+      TZ: "${TZ:-America/Chicago}"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d openproject"]
+      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Cache ─────────────────────────────────────────────────────────────────────
+  cache:
+    image: memcached
+    container_name: openproject_cache
+    <<: *restart_policy
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'stats' | nc -q 1 localhost 11211 | grep -q uptime"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── Database seeder / migrator (one-shot) ────────────────────────────────────
+  seeder:
+    <<: *app
+    container_name: openproject_seeder
+    command: "./docker/prod/seeder"
+    restart: on-failure
+    networks:
+      - backend
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+
+  # ── Application services ───────────────────────────────────────────────────────
+  web:
+    <<: *app
+    container_name: openproject_web
+    command: "./docker/prod/web"
+    hostname: "${OPENPROJECT_HOST__NAME:-localhost:8090}"
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+      seeder:
+        condition: service_completed_successfully
+    labels:
+      - autoheal=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080${OPENPROJECT_RAILS__RELATIVE__URL__ROOT:-}/health_checks/default"]
+      start_period: 60s
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    <<: *app
+    container_name: openproject_worker
+    command: "./docker/prod/worker"
+    networks:
+      - backend
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+      seeder:
+        condition: service_completed_successfully
+
+  cron:
+    <<: *app
+    container_name: openproject_cron
+    command: "./docker/prod/cron"
+    networks:
+      - backend
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+      seeder:
+        condition: service_completed_successfully
+
+  # ── Collaborative editing ─────────────────────────────────────────────────────
+  hocuspocus:
+    image: openproject/hocuspocus:17.2.3
+    container_name: openproject_hocuspocus
+    <<: *restart_policy
+    environment:
+      SECRET: "${COLLABORATIVE_SERVER_SECRET}"
+      OPENPROJECT_URL: "${OPENPROJECT_URL:-http://web:8080}"
+      OPENPROJECT_HTTPS: "${OPENPROJECT_HTTPS:-false}"
+    networks:
+      - backend
+      - frontend
+
+  # ── Reverse proxy — host port 8090 ───────────────────────────────────────────
+  proxy:
+    build:
+      context: ./proxy
+      args:
+        APP_HOST: web
+    image: openproject/proxy
+    container_name: openproject_proxy
+    <<: *restart_policy
+    ports:
+      - "${PORT:-8090}:80"
+    networks:
+      - frontend
+    depends_on:
+      web:
+        condition: service_healthy
+
+  # ── Auto-healer (restarts unhealthy containers) ───────────────────────────────
+  autoheal:
+    image: willfarrell/autoheal:1.2.0
+    container_name: openproject_autoheal
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: autoheal
+      AUTOHEAL_START_PERIOD: 600
+      AUTOHEAL_INTERVAL: 30

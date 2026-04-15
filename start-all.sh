@@ -10,6 +10,7 @@ SERVICES=(
     bookstack
     erpnext
     n8n
+    openproject
 )
 
 FAILED=()
