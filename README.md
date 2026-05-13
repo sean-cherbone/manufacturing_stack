@@ -12,6 +12,7 @@ A collection of self-hosted, open-source services for manufacturing operations, 
 | [Invoice Ninja](https://invoiceninja.com) | [8092](http://localhost:8092) | Accounting and invoicing |
 | [InvenTree](https://inventree.org) | [8096](http://localhost:8096) | Inventory and parts management |
 | [Plane](https://plane.so) | [8100](http://localhost:8100) | Project management and work tracking |
+| [trigger.dev](https://trigger.dev) | [3040](http://localhost:3040) | Background jobs and workflow execution |
 
 ## Prerequisites
 
@@ -49,6 +50,9 @@ cd inventree && ./stop.sh
 
 cd plane && ./start.sh
 cd plane && ./stop.sh
+
+cd triggerdev && ./start.sh
+cd triggerdev && ./stop.sh
 ```
 
 ## Configuration
@@ -63,6 +67,7 @@ Each service has a `.env` file containing default values. **Review and update pa
 | Invoice Ninja | `invoiceninja/.env` | `DB_PASSWORD`, `DB_ROOT_PASSWORD`, `IN_USER_EMAIL`, `IN_PASSWORD` |
 | InvenTree | `inventree/.env` | `INVENTREE_DB_PASSWORD`, `INVENTREE_ADMIN_PASSWORD` |
 | Plane | `plane/.env` | `POSTGRES_PASSWORD`, `SECRET_KEY`, `RABBITMQ_PASSWORD` |
+| trigger.dev | `triggerdev/.env` | `POSTGRES_PASSWORD`, `ENCRYPTION_KEY`, `MAGIC_LINK_SECRET`, `SESSION_SECRET` |
 
 `.env` files are git-ignored and will not be committed. Each file is created with working defaults so the stack runs out of the box.
 
@@ -105,6 +110,13 @@ Each service has a `.env` file containing default values. **Review and update pa
 - Create your workspace and owner account on first visit to `http://localhost:8100`
 - **Do not change `SECRET_KEY` after first run** — it invalidates all active sessions
 
+### trigger.dev
+
+- `POSTGRES_PASSWORD`, `MAGIC_LINK_SECRET`, `SESSION_SECRET`, `ENCRYPTION_KEY`, `PROVIDER_SECRET`, and `COORDINATOR_SECRET` are auto-generated and saved to `triggerdev/.env` on first start
+- Uses magic link authentication — on first visit enter your email, then retrieve the login link from `docker logs trigger_webapp`
+- **Never change `ENCRYPTION_KEY`, `MAGIC_LINK_SECRET`, or `SESSION_SECRET` after first run** — changing these breaks stored data or logs out all users
+- The `docker-provider` and `coordinator` containers mount `/var/run/docker.sock` to spawn task worker containers on demand
+
 ## Data Persistence
 
 All service data is stored in Docker named volumes scoped to each project. Stopping services preserves all data.
@@ -133,3 +145,4 @@ Each service is a separate Docker Compose project with its own network, volumes,
 | Invoice Ninja | `invoiceninja` | MySQL 8 |
 | InvenTree | `inventree` | PostgreSQL 17 |
 | Plane | `plane` | PostgreSQL 15 |
+| trigger.dev | `triggerdev` | PostgreSQL 16 |

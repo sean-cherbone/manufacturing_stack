@@ -1,0 +1,100 @@
+x-webapp-env: &webapp-env
+  LOGIN_ORIGIN: ${TRIGGER_PROTOCOL:-http}://${TRIGGER_DOMAIN:-localhost:3040}
+  APP_ORIGIN: ${TRIGGER_PROTOCOL:-http}://${TRIGGER_DOMAIN:-localhost:3040}
+  DEV_OTEL_EXPORTER_OTLP_ENDPOINT: ${TRIGGER_PROTOCOL:-http}://${TRIGGER_DOMAIN:-localhost:3040}/otel
+  ELECTRIC_ORIGIN: http://electric:3000
+
+x-worker-env: &worker-env
+  PLATFORM_HOST: webapp
+  PLATFORM_WS_PORT: 3030
+  SECURE_CONNECTION: "false"
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${TRIGGER_PROTOCOL:-http}://${TRIGGER_DOMAIN:-localhost:3040}/otel
+
+volumes:
+  db_data:
+  redis_data:
+
+networks:
+  trigger_net:
+
+services:
+  webapp:
+    container_name: trigger_webapp
+    image: ghcr.io/triggerdotdev/trigger.dev:${TRIGGER_IMAGE_TAG:-v3}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      <<: *webapp-env
+    ports:
+      - "${LISTEN_PORT:-3040}:3030"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - trigger_net
+
+  postgres:
+    container_name: trigger_db
+    image: postgres:${POSTGRES_IMAGE_TAG:-16}
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+    env_file: .env
+    networks:
+      - trigger_net
+    command:
+      - -c
+      - wal_level=logical
+
+  redis:
+    container_name: trigger_redis
+    image: redis:${REDIS_IMAGE_TAG:-7}
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - trigger_net
+
+  electric:
+    container_name: trigger_electric
+    image: electricsql/electric:${ELECTRIC_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}?sslmode=disable
+      ELECTRIC_INSECURE: "true"
+    networks:
+      - trigger_net
+    depends_on:
+      - postgres
+
+  docker-provider:
+    container_name: trigger_provider
+    image: ghcr.io/triggerdotdev/provider/docker:${TRIGGER_IMAGE_TAG:-v3}
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
+    networks:
+      - trigger_net
+    depends_on:
+      - webapp
+    env_file: .env
+    environment:
+      <<: *worker-env
+      PLATFORM_SECRET: ${PROVIDER_SECRET}
+
+  coordinator:
+    container_name: trigger_coordinator
+    image: ghcr.io/triggerdotdev/coordinator:${TRIGGER_IMAGE_TAG:-v3}
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
+    networks:
+      - trigger_net
+    depends_on:
+      - webapp
+    env_file: .env
+    environment:
+      <<: *worker-env
+      PLATFORM_SECRET: ${COORDINATOR_SECRET}

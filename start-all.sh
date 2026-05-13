@@ -13,6 +13,7 @@ SERVICES=(
     invoiceninja
     inventree
     plane
+    triggerdev
 )
 
 FAILED=()
