@@ -67,8 +67,11 @@ services:
     container_name: inventree_server
     restart: unless-stopped
     env_file: ./.env
+    environment:
+      INVENTREE_WEB_PORT: "8000"
     volumes:
       - inventree_data:/home/inventree/data
+      - ./spa_helper.py:/home/inventree/src/backend/InvenTree/web/templatetags/spa_helper.py:ro
     networks:
       - inventree
     depends_on:
@@ -85,6 +88,8 @@ services:
     command: invoke worker
     restart: unless-stopped
     env_file: ./.env
+    environment:
+      INVENTREE_WEB_PORT: "8000"
     volumes:
       - inventree_data:/home/inventree/data
     networks:
