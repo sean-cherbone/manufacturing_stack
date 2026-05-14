@@ -10,7 +10,19 @@ trigger.dev is an open-source platform for building and running reliable backgro
 
 ---
 
-## Access
+## Attribution
+
+**trigger.dev** is open-source software developed and maintained by Trigger.dev (YC W23). It is made available under the [AGPL-3.0 License](https://github.com/triggerdotdev/trigger.dev/blob/main/LICENSE). The project is venture-backed and sustained through its cloud offerings.
+
+- **Cloud service:** [trigger.dev](https://trigger.dev) — Trigger.dev offers a fully managed cloud platform with a Hobby tier (free), Team, and Enterprise plans. The cloud version handles worker infrastructure, scaling, execution history, and alerting, and your subscription directly supports the development team.
+- **Self-hosted vs. cloud trade-off:** Running self-hosted means managing the Docker provider and coordinator, which spawn and clean up ephemeral worker containers on the host machine — adding meaningful operational complexity compared to the cloud offering.
+- **Community & support:** [trigger.dev/discord](https://trigger.dev/discord) · [GitHub Discussions](https://github.com/triggerdotdev/trigger.dev/discussions)
+
+You do not need to run this service locally. The Trigger.dev cloud Hobby tier covers most development and small-scale production workloads at no cost.
+
+---
+
+## Local Access
 
 | | |
 |---|---|

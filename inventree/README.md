@@ -10,7 +10,18 @@ InvenTree is an open-source inventory management system designed for tracking pa
 
 ---
 
-## Access
+## Attribution
+
+**InvenTree** is open-source software developed and maintained by the InvenTree community. It is made freely available under the [MIT License](https://github.com/inventree/InvenTree/blob/master/LICENSE). The project is volunteer-driven and relies on community contributions for development, documentation, and support.
+
+- **Support InvenTree:** [GitHub Sponsors](https://github.com/sponsors/inventree) · [Open Collective](https://opencollective.com/inventree)
+- **Contribute:** [github.com/inventree/InvenTree](https://github.com/inventree/InvenTree) — bug reports, feature requests, and pull requests are all welcome
+
+InvenTree does not currently offer an official cloud-hosted service. If you prefer not to manage the infrastructure yourself, some third-party integrators offer managed InvenTree deployments — check the [InvenTree community forums](https://github.com/inventree/InvenTree/discussions) for current recommendations.
+
+---
+
+## Local Access
 
 | | |
 |---|---|

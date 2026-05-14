@@ -9,7 +9,18 @@ Invoice Ninja is an open-source invoicing, billing, and accounting platform. It 
 
 ---
 
-## Access
+## Attribution
+
+**Invoice Ninja** is open-source software developed and maintained by Invoice Ninja Inc. It is made available under the [Elastic License 2.0](https://github.com/invoiceninja/invoiceninja/blob/master/LICENSE) (v5 and later). The project is actively developed by a small commercial team who sustain development through their hosted cloud service.
+
+- **Support Invoice Ninja:** Subscribe to the hosted cloud service — this is the primary way to support the team financially
+- **Cloud service:** [invoiceninja.com](https://invoiceninja.com) — Invoice Ninja offers a fully managed hosted version with free and paid plans. The cloud version eliminates the need to manage infrastructure, backups, and upgrades yourself, and your subscription directly funds continued development of the open-source project.
+
+You do not need to run this service locally. Invoice Ninja's cloud offering supports the same feature set as the self-hosted version and is the recommended path for most users.
+
+---
+
+## Local Access
 
 | | |
 |---|---|

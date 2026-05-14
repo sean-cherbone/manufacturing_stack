@@ -10,7 +10,19 @@ n8n is an open-source workflow automation platform with a visual node-based edit
 
 ---
 
-## Access
+## Attribution
+
+**n8n** is open-source software developed and maintained by n8n GmbH (Berlin). It is made available under the [Sustainable Use License](https://github.com/n8n-io/n8n/blob/master/LICENSE.md) (a fair-code license — free for internal use, requires a commercial license for offering n8n as a service to others). The project is backed by venture capital and sustained through its cloud and enterprise offerings.
+
+- **Cloud service:** [app.n8n.cloud](https://app.n8n.cloud) — n8n offers a fully managed cloud version with a free trial and paid plans. The cloud version handles infrastructure, scaling, and updates, and includes additional features like enhanced execution history and managed credentials.
+- **Enterprise edition:** [n8n.io/enterprise](https://n8n.io/enterprise) — adds SSO, advanced RBAC, external secret stores, and dedicated support
+- **Support & community:** [community.n8n.io](https://community.n8n.io) — active community forum for workflows, integrations, and troubleshooting
+
+You do not need to run this service locally. n8n Cloud is the easiest path to get started and directly supports the development team.
+
+---
+
+## Local Access
 
 | | |
 |---|---|

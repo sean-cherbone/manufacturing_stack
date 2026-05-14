@@ -9,7 +9,18 @@ BookStack is an open-source, self-hosted wiki platform for organising and storin
 
 ---
 
-## Access
+## Attribution
+
+**BookStack** is open-source software developed and maintained by Dan Brown and the BookStack community. It is made freely available under the [MIT License](https://github.com/BookStackApp/BookStack/blob/development/LICENSE). The Docker image used here is packaged and maintained by the [LinuxServer.io](https://www.linuxserver.io) community, a separate volunteer organization that provides long-running, well-maintained Docker images for many popular self-hosted applications.
+
+- **Support BookStack:** [GitHub Sponsors — ssddanbrown](https://github.com/sponsors/ssddanbrown)
+- **Support LinuxServer.io:** [Open Collective](https://opencollective.com/linuxserver) · [GitHub Sponsors](https://github.com/sponsors/linuxserver)
+
+BookStack does not currently offer an official cloud-hosted service. If you prefer not to manage the infrastructure yourself, a number of third-party managed hosting providers offer BookStack as a service — search "BookStack managed hosting" for current options.
+
+---
+
+## Local Access
 
 | | |
 |---|---|

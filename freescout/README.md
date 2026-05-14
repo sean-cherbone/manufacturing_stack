@@ -9,7 +9,18 @@ FreeScout is an open-source help desk and shared mailbox application — a self-
 
 ---
 
-## Access
+## Attribution
+
+**FreeScout** is open-source software developed and maintained by the FreeScout team. It is made freely available under the [AGPL-3.0 License](https://github.com/freescout-help-desk/freescout/blob/master/LICENSE). The Docker image used here is maintained by [tiredofit](https://github.com/tiredofit), an independent contributor who packages FreeScout and many other applications as community Docker images.
+
+- **Support FreeScout:** [GitHub Sponsors](https://github.com/sponsors/freescout-help-desk)
+- **Purchase premium modules:** [freescout.net/modules](https://freescout.net/modules) — the project sustains itself in part through paid extension modules for features like Slack integration, AI replies, and advanced reporting
+
+FreeScout does not offer an official cloud-hosted service. It is designed as a self-hosted alternative to commercial help desks like HelpScout and Zendesk. If you prefer a managed service with similar functionality, consider [HelpScout](https://www.helpscout.com) or [Zendesk](https://www.zendesk.com) as commercial alternatives.
+
+---
+
+## Local Access
 
 | | |
 |---|---|

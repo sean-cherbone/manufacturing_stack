@@ -9,7 +9,19 @@ Plane is an open-source project management platform — a self-hosted alternativ
 
 ---
 
-## Access
+## Attribution
+
+**Plane** is open-source software developed and maintained by Plane (makeplane). It is made available under the [AGPL-3.0 License](https://github.com/makeplane/plane/blob/master/LICENSE). The project is venture-backed and sustained through its cloud and Pro offerings.
+
+- **Cloud service:** [app.plane.so](https://app.plane.so) — Plane offers a fully managed cloud version with a generous free tier and paid Pro/Business plans. The cloud version handles infrastructure, updates, and backups, and your subscription supports continued open-source development.
+- **Plane Pro / Business:** Adds unlimited members, advanced analytics, custom workflows, priority support, and more — available on both cloud and self-hosted
+- **Community:** [GitHub Discussions](https://github.com/makeplane/plane/discussions) · [Discord](https://discord.com/invite/A92xrEGCge)
+
+You do not need to run this service locally. Plane Cloud includes a free tier suitable for small teams and is the lowest-friction way to get started.
+
+---
+
+## Local Access
 
 | | |
 |---|---|
