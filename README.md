@@ -4,15 +4,59 @@ A collection of self-hosted, open-source services for manufacturing operations, 
 
 ## Services
 
-| Service | Port | Purpose |
-| ------- | ---- | ------- |
-| [n8n](https://n8n.io) | [5678](http://localhost:5678) | Workflow automation — integrates all services |
-| [BookStack](https://www.bookstackapp.com) | [6875](http://localhost:6875) | Documentation and knowledge base |
-| [FreeScout](https://freescout.net) | [8095](http://localhost:8095) | Help desk and shared inbox |
-| [Invoice Ninja](https://invoiceninja.com) | [8092](http://localhost:8092) | Accounting and invoicing |
-| [InvenTree](https://inventree.org) | [8096](http://localhost:8096) | Inventory and parts management |
-| [Plane](https://plane.so) | [8100](http://localhost:8100) | Project management and work tracking |
-| [trigger.dev](https://trigger.dev) | [3040](http://localhost:3040) | Background jobs and workflow execution |
+Idle RAM and base storage are measured with all services running and only an initial admin account created — no workflows, inventory, or projects added.
+
+| Service | Port | Purpose | Idle RAM | Base Storage |
+| ------- | ---- | ------- | -------- | ------------ |
+| [n8n](https://n8n.io) | [5678](http://localhost:5678) | Workflow automation — integrates all services | ~470 MB | ~70 MB |
+| [BookStack](https://www.bookstackapp.com) | [6875](http://localhost:6875) | Documentation and knowledge base | ~240 MB | ~165 MB |
+| [FreeScout](https://freescout.net) | [8095](http://localhost:8095) | Help desk and shared inbox | ~330 MB | ~175 MB |
+| [Invoice Ninja](https://invoiceninja.com) | [8092](http://localhost:8092) | Accounting and invoicing | ~1.1 GB | ~470 MB |
+| [InvenTree](https://inventree.org) | [8096](http://localhost:8096) | Inventory and parts management | ~1.95 GB | ~140 MB |
+| [Plane](https://plane.so) | [8100](http://localhost:8100) | Project management and work tracking | ~1.85 GB | ~80 MB |
+| [trigger.dev](https://trigger.dev) | [3040](http://localhost:3040) | Background jobs and workflow execution | ~715 MB | ~75 MB |
+| **Total** | | | **~6.7 GB** | **~1.2 GB** |
+
+## Total System Requirements
+
+### Resource summary
+
+| Resource | Value |
+| -------- | ----- |
+| Idle RAM | ~6.7 GB |
+| Base volume storage | ~1.2 GB |
+| Container images (disk) | ~17 GB |
+
+### Minimum and recommended host resources
+
+| Resource | Minimum | Recommended |
+| -------- | ------- | ----------- |
+| RAM | 8 GB | 16 GB |
+| Disk | 25 GB SSD | 50 GB SSD |
+| CPU | 2 cores | 4 cores |
+
+**RAM**: The stack uses ~6.7 GB at idle. An 8 GB host leaves ~1.3 GB for the OS — workable but tight under active use. 16 GB provides comfortable headroom for concurrent users, background job execution, and memory spikes during file uploads or heavy queries.
+
+The largest single consumer is InvenTree at ~1.95 GB. Its background worker (`qcluster`) forks multiple Python processes that each load the full Django application into memory; this is expected behavior and reflects the idle baseline, not a memory leak.
+
+**Disk**: Container images (~17 GB) are a one-time pull per version and do not grow during operation. Volume storage starts at ~1.2 GB with no user data and grows as the stack is used.
+
+### Volume storage growth
+
+| Service | Primary growth drivers |
+| ------- | ---------------------- |
+| n8n | Workflow execution logs — prune via Settings → Log Pruning or set `EXECUTIONS_DATA_MAX_AGE` in `.env` |
+| BookStack | Page content, file attachments, and image uploads |
+| FreeScout | Email history and file attachments |
+| Invoice Ninja | Invoice PDFs and documents; base includes ~245 MB of static app assets that don't change |
+| InvenTree | Parts database, parts images, and document attachments — scales with inventory size |
+| Plane | Project data and file uploads — scales with team and issue volume |
+| trigger.dev | Job run history — prune via the dashboard or `npx trigger.dev runs delete` |
+
+For storage sizing guidance by database engine:
+
+- [PostgreSQL disk usage](https://www.postgresql.org/docs/current/diskusage.html) — used by n8n, InvenTree, Plane, trigger.dev
+- [MySQL / MariaDB table sizing](https://mariadb.com/kb/en/optimizing-table_size/) — used by BookStack, FreeScout, Invoice Ninja
 
 ## Prerequisites
 

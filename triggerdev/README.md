@@ -36,12 +36,27 @@ trigger.dev uses passwordless magic link authentication by default. On first vis
 ## First-run Setup
 
 1. Run `./start.sh` and wait ~30 seconds for the webapp to become ready
-2. Open http://localhost:3040 and enter your email address
+2. Open http://localhost:3040 and enter your email address, then click **Send magic link**
 3. Retrieve the magic link from the webapp logs:
    ```bash
-   docker logs trigger_webapp 2>&1 | grep -i 'magic\|login'
+   docker compose -p triggerdev logs webapp 2>&1 | grep 'http://' | tail -5
    ```
-4. Open the link in your browser to complete sign-in and create your account
+   Look for a line containing the full login URL:
+
+   ```text
+   http://localhost:3040/magic?token=U2FsdGVkX1...%2Bos
+   ```
+
+   The token is a long URL-encoded encrypted string. Copy the **entire URL** and open it in your browser.
+
+   > **Common mistake:** the webapp also logs a short `requestId` (e.g. `_IpF0NyOG2ux6eORKCFGZ`) as part of
+   > the HTTP access log. That is a request trace ID, not the magic link token — do not use it.
+   > The magic link token is ~100+ characters and only appears on the `http://localhost:3040/magic?token=…` line.
+
+   > **No output?** The link is emitted at the moment you submit your email, not at startup. If nothing
+   > appears, re-submit the form and run the command again immediately after.
+
+4. Open the full URL in your browser to complete sign-in and create your account
 5. Create an organisation and project from the dashboard
 
 To restrict who can sign up, set `WHITELISTED_EMAILS` in `.env` before first start (see [.env values of interest](#env--values-of-interest)).
