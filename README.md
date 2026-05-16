@@ -17,6 +17,8 @@ Idle RAM and base storage are measured with all services running and only an ini
 | [trigger.dev](https://trigger.dev) | [3040](http://localhost:3040) | Background jobs and workflow execution | ~715 MB | ~75 MB |
 | **Total** | | | **~6.7 GB** | **~1.2 GB** |
 
+Supporting infrastructure for remote access to this host (WireGuard VPN, Cloudflare DDNS, SSH key setup) is documented in [REMOTE_ACCESS.md](REMOTE_ACCESS.md). Additional operational concerns will follow the same pattern as separate documents.
+
 ## Total System Requirements
 
 ### Resource summary
@@ -58,6 +60,59 @@ For storage sizing guidance by database engine:
 - [PostgreSQL disk usage](https://www.postgresql.org/docs/current/diskusage.html) — used by n8n, InvenTree, Plane, trigger.dev
 - [MySQL / MariaDB table sizing](https://mariadb.com/kb/en/optimizing-table_size/) — used by BookStack, FreeScout, Invoice Ninja
 
+## Service Environment Files
+
+Each service is configured via a `.env` file in its directory. These files hold service-specific secrets and settings — database passwords, API keys, encryption keys, port numbers, and initial admin credentials.
+
+`.env` files are **git-ignored** and will never be committed. On first start, each service auto-generates secure random values for secrets and writes them to its `.env`, so the stack runs out of the box without manual configuration. **Review and update credentials before running in a production or externally-accessible environment.**
+
+| Service | Config file | Key variables |
+| ------- | ----------- | ------------- |
+| BookStack | `bookstack/.env` | `DB_PASSWORD`, `MYSQL_ROOT_PASSWORD` |
+| n8n | `n8n/.env` | `POSTGRES_PASSWORD`, `POSTGRES_NON_ROOT_PASSWORD` |
+| FreeScout | `freescout/.env` | `DB_PASSWORD`, `ADMIN_EMAIL`, `ADMIN_PASS` |
+| Invoice Ninja | `invoiceninja/.env` | `DB_PASSWORD`, `DB_ROOT_PASSWORD`, `IN_USER_EMAIL`, `IN_PASSWORD` |
+| InvenTree | `inventree/.env` | `INVENTREE_DB_PASSWORD`, `INVENTREE_ADMIN_PASSWORD` |
+| Plane | `plane/.env` | `POSTGRES_PASSWORD`, `SECRET_KEY`, `RABBITMQ_PASSWORD` |
+| trigger.dev | `triggerdev/.env` | `POSTGRES_PASSWORD`, `ENCRYPTION_KEY`, `MAGIC_LINK_SECRET`, `SESSION_SECRET` |
+
+An optional gist-based utility for syncing `.env` files between machines is described in [Environment File Management](#environment-file-management-optional) below.
+
+---
+
+## Environment File Management (Optional)
+
+`push_envs.sh` and `pull_envs.sh` let you securely back up and restore all service `.env` files via a private GitHub Gist. Files are encrypted with [age](https://github.com/FiloSottile/age) using your SSH `ed25519` key before they leave the machine — the gist stores only ciphertext.
+
+This is useful for bootstrapping the stack on a new machine from a fully-configured one, or as a secure off-machine backup of your secrets.
+
+### Requirements
+
+- **SSH `ed25519` key** registered with GitHub — see [REMOTE_ACCESS.md → SSH Keys](REMOTE_ACCESS.md#ssh-keys). Setting up SSH for GitHub is a general security practice independent of this flow.
+- **`age` encryption tool** — see the [age installation guide](https://github.com/FiloSottile/age?tab=readme-ov-file#installation). Packages are available for all major systems (`apt install age`, `brew install age`, etc.).
+
+### Gist setup (one time)
+
+These steps are specific to this flow and not covered elsewhere:
+
+1. Create a new **secret** gist at <https://gist.github.com>. Initial content does not matter — the scripts populate it.
+2. On the gist page, open the dropdown next to the **Clone** button and select **Clone via SSH**. Copy the URL — it looks like `git@gist.github.com:<hash>.git`. The HTTPS URL will not work because the scripts authenticate with your key.
+3. Run `./push_envs.sh` or `./pull_envs.sh`. You will be prompted for this URL once; it is saved to `.envs-gist.conf` for all subsequent runs.
+
+### Usage
+
+```bash
+# Encrypt all local .env files and push to the gist
+./push_envs.sh
+
+# Pull the latest from the gist and decrypt into each service directory
+./pull_envs.sh
+```
+
+Both scripts auto-discover service directories. `push_envs.sh` encrypts every subdirectory that contains a `.env`; `pull_envs.sh` decrypts every `<service>.env.age` found in the gist into the matching local service directory. Existing local `.env` files are overwritten on pull. The gist uses a flat file structure with one file per service: `<service>.env.age`.
+
+---
+
 ## Prerequisites
 
 - [Docker Engine 24+](https://docs.docker.com/engine/install/)
@@ -98,22 +153,6 @@ cd plane && ./stop.sh
 cd triggerdev && ./start.sh
 cd triggerdev && ./stop.sh
 ```
-
-## Configuration
-
-Each service has a `.env` file containing default values. **Review and update passwords before first run.**
-
-| Service | Config file | Key variables |
-| ------- | ----------- | ------------- |
-| BookStack | `bookstack/.env` | `DB_PASSWORD`, `MYSQL_ROOT_PASSWORD` |
-| n8n | `n8n/.env` | `POSTGRES_PASSWORD`, `POSTGRES_NON_ROOT_PASSWORD` |
-| FreeScout | `freescout/.env` | `DB_PASSWORD`, `ADMIN_EMAIL`, `ADMIN_PASS` |
-| Invoice Ninja | `invoiceninja/.env` | `DB_PASSWORD`, `DB_ROOT_PASSWORD`, `IN_USER_EMAIL`, `IN_PASSWORD` |
-| InvenTree | `inventree/.env` | `INVENTREE_DB_PASSWORD`, `INVENTREE_ADMIN_PASSWORD` |
-| Plane | `plane/.env` | `POSTGRES_PASSWORD`, `SECRET_KEY`, `RABBITMQ_PASSWORD` |
-| trigger.dev | `triggerdev/.env` | `POSTGRES_PASSWORD`, `ENCRYPTION_KEY`, `MAGIC_LINK_SECRET`, `SESSION_SECRET` |
-
-`.env` files are git-ignored and will not be committed. Each file is created with working defaults so the stack runs out of the box.
 
 ## First Run Notes
 

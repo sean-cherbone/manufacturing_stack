@@ -1,0 +1,35 @@
+# cloudflare-ddns — Dynamic DNS updater for Cloudflare
+# Project name: cloudflare-ddns  (managed by start.sh / stop.sh)
+#
+# Runs in host network mode so it can detect the real public IP of the host.
+# No ports are exposed — this is a background updater, not a server.
+#
+# Required .env variables:
+#   CLOUDFLARE_API_TOKEN — API token with Zone:DNS:Edit permission
+#   DOMAINS              — comma-separated list of domains to update (IPv4 + IPv6)
+#
+# Optional .env variables:
+#   IP4_DOMAINS   — IPv4-only domain list (overrides DOMAINS for IPv4)
+#   IP6_DOMAINS   — IPv6-only domain list (overrides DOMAINS for IPv6)
+#   IP6_PROVIDER  — IPv6 detection method (default: cloudflare.trace; use "none" to disable)
+#   PROXIED       — Enable Cloudflare proxy/orange-cloud (default: false)
+#   UPDATE_CRON   — Update schedule (default: @every 5m)
+#   TTL           — DNS record TTL in seconds, 1 = auto (default: 1)
+
+services:
+  cloudflare-ddns:
+    image: timothyjmiller/cloudflare-ddns:latest
+    container_name: cloudflare-ddns
+    security_opt:
+      - no-new-privileges:true
+    network_mode: host
+    environment:
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+      DOMAINS:              ${DOMAINS:-}
+      IP4_DOMAINS:          ${IP4_DOMAINS:-}
+      IP6_DOMAINS:          ${IP6_DOMAINS:-}
+      IP6_PROVIDER:         ${IP6_PROVIDER:-cloudflare.trace}
+      PROXIED:              ${PROXIED:-false}
+      UPDATE_CRON:          ${UPDATE_CRON:-@every 5m}
+      TTL:                  ${TTL:-1}
+    restart: unless-stopped

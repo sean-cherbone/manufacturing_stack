@@ -40,6 +40,7 @@ services:
       INIT_IPV4_CIDR: ${INIT_IPV4_CIDR:-10.8.0.0/24}
       INIT_IPV6_CIDR: ${INIT_IPV6_CIDR:-fd42::/64}
       INIT_ALLOWED_IPS: ${INIT_ALLOWED_IPS:-0.0.0.0/0,::/0}
+      WG_HOST: ${WG_HOST:-vpn.cherbone.us}
     volumes:
       - wg_data:/etc/wireguard
       - /lib/modules:/lib/modules:ro
